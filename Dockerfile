@@ -11,4 +11,4 @@ RUN ./bootstrap.sh && \
     make install
 
 FROM quay.io/ceph/ceph:v16.2.7
-COPY --from=builder /usr/local/bin/zabbix_sender /usr/local/bin/zabbix_sender
+COPY --from=builder /usr/local/bin/zabbix_sender /usr/bin/zabbix_sender
