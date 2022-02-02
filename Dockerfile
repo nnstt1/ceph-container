@@ -1,5 +1,14 @@
-FROM quay.io/ceph/ceph:v16.2.7
+FROM centos:centos8 AS builder
+RUN sed -i 's/#baseurl=http:\/\/mirror.centos.org/baseurl=http:\/\/vault.centos.org/' /etc/yum.repos.d/CentOS-Linux-AppStream.repo && \
+    sed -i 's/#baseurl=http:\/\/mirror.centos.org/baseurl=http:\/\/vault.centos.org/' /etc/yum.repos.d/CentOS-Linux-BaseOS.repo && \
+    sed -i 's/#baseurl=http:\/\/mirror.centos.org/baseurl=http:\/\/vault.centos.org/' /etc/yum.repos.d/CentOS-Linux-Extras.repo && \
+    yum install -y git zip automake pcre-devel gcc make && \
+    git clone https://git.zabbix.com/scm/zbx/zabbix.git -b 5.4.10 --depth 1
+WORKDIR /zabbix/
+RUN ./bootstrap.sh && \
+    ./configure --enable-agent --disable-dependency-tracking && \
+    make && \
+    make install
 
-RUN dnf install -y https://repo.zabbix.com/zabbix/5.4/rhel/8/x86_64/zabbix-release-5.4-1.el8.noarch.rpm --disablerepo=appstream,baseos,extras && \
-    dnf install -y zabbix-sender --disablerepo=appstream,baseos,extras && \
-    dnf clean all
+FROM quay.io/ceph/ceph:v16.2.7
+COPY --from=builder /usr/local/bin/zabbix_sender /usr/local/bin/zabbix_sender
